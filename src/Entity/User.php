@@ -5,9 +5,12 @@ namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Get;
 use App\DataPersister\UserDataPersister;
 use App\Repository\UserRepository;
+use App\State\Provider\MeProvider;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -22,6 +25,13 @@ use Symfony\Component\Security\Core\User\UserInterface;
             validationContext: ['groups' => ['Default']],
             security: "is_granted('PUBLIC_ACCESS')",
             processor: UserDataPersister::class
+        ),
+        new Get(
+            uriTemplate: '/me',
+            security: "is_granted('ROLE_USER')",
+            provider: MeProvider::class,
+            normalizationContext: ['groups' => ['user:read']],
+            securityMessage : "You must be logged in",
         )
     ]
 )]
@@ -33,7 +43,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?int $id = null;
 
     #[ORM\Column(length: 180)]
-    #[Groups(['user:write'])]
+    #[Groups(['user:write', 'user:read'])]
     private ?string $email = null;
 
     /**
@@ -50,11 +60,21 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $password = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['user:write'])]
+    #[Groups(['user:write', 'user:read'])]
     private ?string $username = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['user:write', 'user:read'])]
     private ?string $profileDesc = null;
+
+
+    #[ORM\OneToOne(mappedBy: 'user', cascade: ['persist', 'remove'])]
+    #[Groups(['user:read'])]
+    private ?UserDetails $userDetails = null;
+
+    #[ORM\OneToOne(mappedBy: 'user', cascade: ['persist', 'remove'])]
+    #[Groups(['user:read'])]
+    private ?ProfessionalDetails $professionalDetails = null;
 
     public function getId(): ?int
     {
@@ -151,6 +171,45 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setProfileDesc(string $profileDesc): static
     {
         $this->profileDesc = $profileDesc;
+
+        return $this;
+    }
+
+    public function getUserDetails(): ?UserDetails
+    {
+        return $this->userDetails;
+    }
+
+    public function setUserDetails(?UserDetails $userDetails): static
+    {
+        // unset the owning side of the relation if necessary
+        if ($userDetails === null && $this->userDetails !== null) {
+            $this->userDetails->setUser(null);
+        }
+
+        // set the owning side of the relation if necessary
+        if ($userDetails !== null && $userDetails->getUser() !== $this) {
+            $userDetails->setUser($this);
+        }
+
+        $this->userDetails = $userDetails;
+
+        return $this;
+    }
+
+    public function getProfessionalDetails(): ?ProfessionalDetails
+    {
+        return $this->professionalDetails;
+    }
+
+    public function setProfessionalDetails(ProfessionalDetails $professionalDetails): static
+    {
+        // set the owning side of the relation if necessary
+        if ($professionalDetails->getUser() !== $this) {
+            $professionalDetails->setUser($this);
+        }
+
+        $this->professionalDetails = $professionalDetails;
 
         return $this;
     }
