@@ -69,11 +69,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
 
     #[ORM\OneToOne(mappedBy: 'user', cascade: ['persist', 'remove'])]
-    #[Groups(['user:read'])]
+    #[Groups(['user:write','user:read', 'userDetails:write', 'userDetails:read'])]
     private ?UserDetails $userDetails = null;
 
     #[ORM\OneToOne(mappedBy: 'user', cascade: ['persist', 'remove'])]
-    #[Groups(['user:read'])]
+    #[Groups(['user:write','user:read', 'professionalDetails:write', 'professionalDetails:read'])]
     private ?ProfessionalDetails $professionalDetails = null;
 
     public function getId(): ?int

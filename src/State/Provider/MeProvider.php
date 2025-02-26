@@ -15,7 +15,16 @@ class MeProvider implements ProviderInterface
 
     public function provide(Operation $operation, array $uriVariables = [], array $context = []): object|array|null
     {
-        return $this->security->getUser();
+        /** @var User */
+        $user = $this->security->getUser();
+        // Load relations explicitly to ensure correct data
+        if ($user->getUserDetails()) {
+            $user->getUserDetails()->getUser();  // Force load of user relation
+        }
+        if ($user->getProfessionalDetails()) {
+            $user->getProfessionalDetails()->getUser(); // Force load of user relation
+        }
+        return $user;
 
     }
 }

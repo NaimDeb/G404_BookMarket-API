@@ -7,22 +7,26 @@ use App\Repository\ProfessionalDetailsRepository;
 use Doctrine\ORM\Mapping as ORM;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Post;
 use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: ProfessionalDetailsRepository::class)]
 #[ApiResource(
     operations: [
+        new Post(
+            denormalizationContext: ['groups' => ['proDetails:write']],
+            validationContext: ['groups' => ['Default']],
+            security: "is_granted('ROLE_ADMIN')",
+        ),
         new Get(
             denormalizationContext: ['groups' => ['proDetails:read']],
             validationContext: ['groups' => ['Default']],
             security: "is_granted('ROLE_USER')",
-            //processor: UserDataPersister::class
         ),
         new Patch(
             denormalizationContext: ['groups' => ['proDetails:write']],
             validationContext: ['groups' => ['Default']],
             security: "is_granted('ROLE_USER')",
-            //processor: UserDataPersister::class
         ),
     ]
 )]
@@ -34,15 +38,15 @@ class ProfessionalDetails
     private ?int $id = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['proDetails:read', 'proDetails:write'])]
+    #[Groups(['proDetails:read', 'proDetails:write', 'user:read', 'user:write'])]
     private ?string $companyName = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['proDetails:read', 'proDetails:write'])]
+    #[Groups(['proDetails:read', 'proDetails:write', 'user:read', 'user:write'])]
     private ?string $companyAddress = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['proDetails:read', 'proDetails:write'])]
+    #[Groups(['proDetails:read', 'proDetails:write', 'user:read', 'user:write'])]
     private ?string $companyPhone = null;
 
     #[ORM\OneToOne(inversedBy: 'professionalDetails', cascade: ['persist', 'remove'])]

@@ -5,7 +5,9 @@ namespace App\Entity;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Post;
 use App\Repository\UserDetailsRepository;
+use App\State\Provider\MeProvider;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 
@@ -15,14 +17,13 @@ use Symfony\Component\Serializer\Attribute\Groups;
         new Get(
             denormalizationContext: ['groups' => ['userDetails:read']],
             validationContext: ['groups' => ['Default']],
-            security: "is_granted('ROLE_USER')",
-            //processor: UserDataPersister::class
+            security: "is_granted('ROLE_ADMIN')",
         ),
         new Patch(
             denormalizationContext: ['groups' => ['userDetails:write']],
             validationContext: ['groups' => ['Default']],
             security: "is_granted('ROLE_USER')",
-            //processor: UserDataPersister::class
+            provider: MeProvider::class,
         ),
     ]
 )]
@@ -34,23 +35,23 @@ class UserDetails
     private ?int $id = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['userDetails:read', 'userDetails:write'])]
+    #[Groups(['userDetails:read', 'userDetails:write', 'user:read', 'user:write'])]
     private ?string $address = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['userDetails:read', 'userDetails:write'])]
+    #[Groups(['userDetails:read', 'userDetails:write', 'user:read', 'user:write'])]
     private ?string $phone = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['userDetails:read', 'userDetails:write'])]
+    #[Groups(['userDetails:read', 'userDetails:write', 'user:read', 'user:write'])]
     private ?string $country = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['userDetails:read', 'userDetails:write'])]
+    #[Groups(['userDetails:read', 'userDetails:write', 'user:read', 'user:write'])]
     private ?string $firstName = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['userDetails:read', 'userDetails:write'])]
+    #[Groups(['userDetails:read', 'userDetails:write', 'user:read', 'user:write'])]
     private ?string $lastName = null;
 
     #[ORM\OneToOne(inversedBy: 'userDetails', cascade: ['persist', 'remove'])]
