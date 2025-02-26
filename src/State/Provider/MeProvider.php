@@ -17,6 +17,11 @@ class MeProvider implements ProviderInterface
     {
         /** @var User */
         $user = $this->security->getUser();
+
+        if (!$user) {
+            throw new \Symfony\Component\Security\Core\Exception\AccessDeniedException('Not authenticated');
+        }
+        
         // Load relations explicitly to ensure correct data
         if ($user->getUserDetails()) {
             $user->getUserDetails()->getUser();  // Force load of user relation
