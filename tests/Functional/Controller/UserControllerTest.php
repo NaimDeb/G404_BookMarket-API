@@ -17,6 +17,7 @@ class UserControllerTest extends WebTestCase
         $this->entityManager = $this->client->getContainer()
             ->get('doctrine')
             ->getManager();
+        $this->entityManager->beginTransaction();
     }
 
     public function testApiMeEndpointWithoutAuthentication()
@@ -45,7 +46,7 @@ class UserControllerTest extends WebTestCase
             [],
             ['CONTENT_TYPE' => 'application/json'],
             json_encode([
-                'username' => 'regular@test.com',
+                'email' => 'regular@test.com',
                 'password' => 'password123'
             ])
         );
@@ -96,7 +97,7 @@ class UserControllerTest extends WebTestCase
             [],
             ['CONTENT_TYPE' => 'application/json'],
             json_encode([
-                'username' => 'pro@test.com',
+                'email' => 'pro@test.com',
                 'password' => 'password123'
             ])
         );
@@ -127,11 +128,10 @@ class UserControllerTest extends WebTestCase
     {
         parent::tearDown();
         
-        // Clean up database
-        $this->entityManager->createQuery('DELETE FROM App\Entity\ProfessionalDetails')->execute();
-        $this->entityManager->createQuery('DELETE FROM App\Entity\User')->execute();
-        
-        $this->entityManager->close();
-        $this->entityManager = null;
+            // Rollback transaction
+        if ($this->entityManager->getConnection()->isTransactionActive()) {
+        $this->entityManager->getConnection()->rollback();
+        }
+
     }
 }
