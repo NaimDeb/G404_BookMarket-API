@@ -9,6 +9,8 @@ use ApiPlatform\Metadata\Get;
 use App\DataPersister\UserDataPersister;
 use App\Repository\UserRepository;
 use App\State\Provider\MeProvider;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Serializer\Attribute\Groups;
@@ -75,6 +77,27 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToOne(mappedBy: 'user', cascade: ['persist', 'remove'])]
     #[Groups(['user:write','user:read', 'professionalDetails:write', 'professionalDetails:read'])]
     private ?ProfessionalDetails $professionalDetails = null;
+
+    #[ORM\OneToOne(inversedBy: 'user', cascade: ['persist', 'remove'])]
+    private ?Image $image = null;
+
+    /**
+     * @var Collection<int, Annonce>
+     */
+    #[ORM\OneToMany(targetEntity: Annonce::class, mappedBy: 'user', orphanRemoval: true)]
+    private Collection $annonces;
+
+    /**
+     * @var Collection<int, UserTransactions>
+     */
+    #[ORM\OneToMany(targetEntity: UserTransactions::class, mappedBy: 'user')]
+    private Collection $userTransactions;
+
+    public function __construct()
+    {
+        $this->annonces = new ArrayCollection();
+        $this->userTransactions = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -210,6 +233,78 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         }
 
         $this->professionalDetails = $professionalDetails;
+
+        return $this;
+    }
+
+    public function getImage(): ?Image
+    {
+        return $this->image;
+    }
+
+    public function setImage(?Image $image): static
+    {
+        $this->image = $image;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Annonce>
+     */
+    public function getAnnonces(): Collection
+    {
+        return $this->annonces;
+    }
+
+    public function addAnnonce(Annonce $annonce): static
+    {
+        if (!$this->annonces->contains($annonce)) {
+            $this->annonces->add($annonce);
+            $annonce->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeAnnonce(Annonce $annonce): static
+    {
+        if ($this->annonces->removeElement($annonce)) {
+            // set the owning side to null (unless already changed)
+            if ($annonce->getUser() === $this) {
+                $annonce->setUser(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, UserTransactions>
+     */
+    public function getUserTransactions(): Collection
+    {
+        return $this->userTransactions;
+    }
+
+    public function addUserTransaction(UserTransactions $userTransaction): static
+    {
+        if (!$this->userTransactions->contains($userTransaction)) {
+            $this->userTransactions->add($userTransaction);
+            $userTransaction->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeUserTransaction(UserTransactions $userTransaction): static
+    {
+        if ($this->userTransactions->removeElement($userTransaction)) {
+            // set the owning side to null (unless already changed)
+            if ($userTransaction->getUser() === $this) {
+                $userTransaction->setUser(null);
+            }
+        }
 
         return $this;
     }

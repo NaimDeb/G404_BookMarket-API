@@ -1,162 +1,137 @@
 <?php
-
 namespace App\Tests\Functional\Controller;
 
 use App\Entity\User;
-use Doctrine\ORM\EntityManagerInterface;
+use App\Entity\ProfessionalDetails;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
-use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
-use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
+use Doctrine\ORM\EntityManagerInterface;
 
 class UserControllerTest extends WebTestCase
 {
     private $client;
-    private $testUserEmail;
     private $entityManager;
-    private $testUserPassword = 'password123';
 
     protected function setUp(): void
     {
         $this->client = static::createClient();
-        $this->entityManager = static::getContainer()->get(EntityManagerInterface::class);
-
-        $this->testUserEmail = 'test' . uniqid() . '@example.com';
+        $this->entityManager = $this->client->getContainer()
+            ->get('doctrine')
+            ->getManager();
     }
 
-    public function testRegisterUser(): array
+    public function testApiMeEndpointWithoutAuthentication()
     {
-        $userData = [
-            'email' => $this->testUserEmail,
-            'password' => $this->testUserPassword,
-            'username' => 'user_' . uniqid(),
-            'profileDesc' => 'Test user description',
-            'userDetails' => [
-                'address' => '123 Test Street',
-                'phone' => '1234567890',
-                'country' => 'Test Country',
-                'firstName' => 'Test',
-                'lastName' => 'User'
-            ],
-            'professionalDetails' => [
-                'companyName' => 'Test Company',
-                'companyAddress' => '456 Company Street',
-                'companyPhone' => '0987654321'
-            ]
-        ];
+        $this->client->request('GET', '/api/me');
+        
+        $this->assertEquals(401, $this->client->getResponse()->getStatusCode());
+    }
 
+    public function testApiMeEndpointWithRegularUser()
+    {
+        // Create regular user
+        $user = new User();
+        $user->setEmail('regular@test.com');
+        $user->setPassword(password_hash('password123', PASSWORD_BCRYPT));
+        $user->setRoles(['ROLE_USER']);
+        
+        $this->entityManager->persist($user);
+        $this->entityManager->flush();
+
+        // Get JWT token
         $this->client->request(
             'POST',
-            '/api/register',
+            '/api/login_check',
             [],
             [],
-            [
-                'CONTENT_TYPE' => 'application/ld+json',
-                'HTTP_ACCEPT' => 'application/ld+json'
-            ],
-            json_encode($userData)
+            ['CONTENT_TYPE' => 'application/json'],
+            json_encode([
+                'username' => 'regular@test.com',
+                'password' => 'password123'
+            ])
         );
 
-        $this->assertResponseStatusCodeSame(Response::HTTP_CREATED);
+        $data = json_decode($this->client->getResponse()->getContent(), true);
+        $token = $data['token'];
 
-        // Return credentials needed for login
-        return [
-            'username' => $this->testUserEmail,
-            'password' => $this->testUserPassword
-        ];
-    }
-
-
-    public function testMeEndpointWithoutAuth(): void
-    {
-        $this->client->request(
-            'GET',
-            '/api/me',
-            [],
-            [],
-            ['CONTENT_TYPE' => 'application/ld+json']
-        );
-
-        $this->assertResponseStatusCodeSame(Response::HTTP_UNAUTHORIZED);
-    }
-
-
-    /**
- * @depends testRegisterUser
- */
-public function testMeEndpointWithAuth(array $credentials): void
-{
-    // Debug credentials
-    echo "\nTrying to login with credentials: " . json_encode($credentials);
-
-    // First, login to get the token
-    $this->client->request(
-        'POST',
-        '/api/login_check',
-        [],
-        [],
-        [
-            'CONTENT_TYPE' => 'application/json',
-            'HTTP_ACCEPT' => 'application/json'
-        ],
-        json_encode([
-            'username' => $credentials['username'],  // This should be the email
-            'password' => $credentials['password']
-        ])
-    );
-
-    // Debug login response
-    echo "\nLogin response: " . $this->client->getResponse()->getContent();
-
-    // Verify the database state
-    $user = $this->entityManager->getRepository(User::class)
-        ->findOneBy(['email' => $credentials['username']]);
-    
-    echo "\nUser in database: " . ($user ? "YES" : "NO");
-    if ($user) {
-        echo "\nUser roles: " . json_encode($user->getRoles());
-        echo "\nUser email: " . $user->getEmail();
-    }
-
-    $this->assertResponseIsSuccessful();
-    $loginResponse = json_decode($this->client->getResponse()->getContent(), true);
-    $this->assertArrayHasKey('token', $loginResponse, 'Login response should contain a token');
-
-
-        // Now use the token to access /api/me
+        // Test /api/me endpoint
         $this->client->request(
             'GET',
             '/api/me',
             [],
             [],
             [
-                'HTTP_AUTHORIZATION' => 'Bearer ' . $loginResponse['token'],
-                'CONTENT_TYPE' => 'application/ld+json'
+                'HTTP_AUTHORIZATION' => 'Bearer ' . $token,
+                'CONTENT_TYPE' => 'application/json'
             ]
         );
 
-        $this->assertResponseIsSuccessful();
-        $meResponse = json_decode($this->client->getResponse()->getContent(), true);
+        $this->assertEquals(200, $this->client->getResponse()->getStatusCode());
+        $responseData = json_decode($this->client->getResponse()->getContent(), true);
+        $this->assertEquals('regular@test.com', $responseData['email']);
+        $this->assertArrayNotHasKey('professionalDetails', $responseData);
+    }
+
+    public function testApiMeEndpointWithProUser()
+    {
+        // Create pro user with details
+        $proUser = new User();
+        $proUser->setEmail('pro@test.com');
+        $proUser->setPassword(password_hash('password123', PASSWORD_BCRYPT));
+        $proUser->setRoles(['ROLE_USER', 'ROLE_PRO']);
+
+        $proDetails = new ProfessionalDetails();
+        $proDetails->setCompanyName('Test Company');
+        // $proDetails->setSiret('12345678901234');
+        $proDetails->setUser($proUser);
         
-        // Assert the response contains the expected user data
-        $this->assertEquals($credentials['username'], $meResponse['email']);
+        $this->entityManager->persist($proUser);
+        $this->entityManager->persist($proDetails);
+        $this->entityManager->flush();
+
+        // Get JWT token
+        $this->client->request(
+            'POST',
+            '/api/login_check',
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            json_encode([
+                'username' => 'pro@test.com',
+                'password' => 'password123'
+            ])
+        );
+
+        $data = json_decode($this->client->getResponse()->getContent(), true);
+        $token = $data['token'];
+
+        // Test /api/me endpoint
+        $this->client->request(
+            'GET',
+            '/api/me',
+            [],
+            [],
+            [
+                'HTTP_AUTHORIZATION' => 'Bearer ' . $token,
+                'CONTENT_TYPE' => 'application/json'
+            ]
+        );
+
+        $this->assertEquals(200, $this->client->getResponse()->getStatusCode());
+        $responseData = json_decode($this->client->getResponse()->getContent(), true);
+        $this->assertEquals('pro@test.com', $responseData['email']);
+        $this->assertArrayHasKey('professionalDetails', $responseData);
+        $this->assertEquals('Test Company', $responseData['professionalDetails']['companyName']);
     }
 
     protected function tearDown(): void
     {
-        if ($this->testUserEmail) {
-            $user = $this->entityManager->getRepository(User::class)
-                ->findOneBy(['email' => $this->testUserEmail]);
-
-            if ($user) {
-                $this->entityManager->remove($user);
-                $this->entityManager->flush();
-            }
-        }
-
+        parent::tearDown();
+        
+        // Clean up database
+        $this->entityManager->createQuery('DELETE FROM App\Entity\ProfessionalDetails')->execute();
+        $this->entityManager->createQuery('DELETE FROM App\Entity\User')->execute();
+        
         $this->entityManager->close();
         $this->entityManager = null;
-        $this->client = null;
-        parent::tearDown();
     }
 }

@@ -52,6 +52,9 @@ class Product
     #[ORM\JoinColumn(nullable: false)]
     private ?Type $type = null;
 
+    #[ORM\ManyToOne(inversedBy: 'products')]
+    private ?Author $author = null;
+
     public function __construct()
     {
         $this->annonces = new ArrayCollection();
@@ -136,6 +139,18 @@ class Product
     public function setType(?Type $type): static
     {
         $this->type = $type;
+
+        return $this;
+    }
+
+    public function getAuthor(): ?Author
+    {
+        return $this->author;
+    }
+
+    public function setAuthor(?Author $author): static
+    {
+        $this->author = $author;
 
         return $this;
     }
