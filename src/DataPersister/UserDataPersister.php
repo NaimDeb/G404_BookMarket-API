@@ -4,7 +4,6 @@ namespace App\DataPersister;
 
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProcessorInterface;
-use App\Entity\ProfessionalDetails;
 use App\Entity\User;
 use App\Entity\UserDetails;
 use Doctrine\ORM\EntityManagerInterface;
@@ -27,11 +26,6 @@ class UserDataPersister implements ProcessorInterface
                 $data->setPassword($hashedPassword);
             }
             $data->setRoles(['ROLE_USER']);
-            // if ($data->getProfessionnalDetails()) {
-            //     $this->entityManager->persist($data->getProfessionnalDetails());
-            //     $data->setRoles(['ROLE_VENDEUR', 'ROLE_USER']);
-            // }
-
 
             // Handle UserDetails
             if ($data->getUserDetails()) {
