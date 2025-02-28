@@ -13,9 +13,7 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity(repositoryClass: TypeRepository::class)]
 #[ApiResource(
     operations: [
-        new GetCollection(
-            uriTemplate: '/genres/all',
-        ),
+        new GetCollection(),
         new Get()
     ]
 )]

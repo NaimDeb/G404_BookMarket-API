@@ -11,9 +11,7 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity(repositoryClass: AuthorRepository::class)]
 #[ApiResource(
     operations: [
-        new GetCollection(
-            uriTemplate: '/authors/all',
-        ),
+        new GetCollection(),
         new Get()
     ]
 )]
