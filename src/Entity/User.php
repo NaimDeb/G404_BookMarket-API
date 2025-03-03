@@ -4,9 +4,12 @@ namespace App\Entity;
 
 
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\Patch;
 use App\DataPersister\UserDataPersister;
+use App\DataPersister\UserUpdateDataPersister;
 use App\Repository\UserRepository;
 use App\State\Provider\MeProvider;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -34,6 +37,19 @@ use Symfony\Component\Security\Core\User\UserInterface;
             provider: MeProvider::class,
             normalizationContext: ['groups' => ['user:read']],
             securityMessage : "You must be logged in",
+        )
+        ,
+        new Delete(
+            security: "is_granted('ROLE_USER') and object == user",
+            securityMessage : "You must be logged in",
+        ),
+        new Patch(
+        
+            denormalizationContext: ['groups' => ['user:update']],
+            normalizationContext: ['groups' => ['user:read']],
+            security: "is_granted('USER_EDIT', object)",
+            processor: UserUpdateDataPersister::class,
+            securityMessage: "Vous ne pouvez modifier que votre propre compte",
         )
     ]
 )]
