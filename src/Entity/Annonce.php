@@ -8,10 +8,10 @@ use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Delete;
+use App\DataPersister\AnnonceDataPersister;
 use App\Repository\AnnonceRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
-use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 
@@ -19,9 +19,20 @@ use Symfony\Component\Serializer\Attribute\Groups;
 #[ApiResource(
     operations: [
         new Get(normalizationContext: ['groups' => ['annonce:read']]),
-        new Post(denormalizationContext: ['groups' => ['annonce:write']],),
-        new Patch(denormalizationContext: ['groups' => ['annonce:update']]),
-        new Delete()
+        new Post(denormalizationContext: ['groups' => ['annonce:write']],
+            processor: AnnonceDataPersister::class),
+
+        
+        new Patch(
+            denormalizationContext: ['groups' => ['annonce:update']],
+            security: "is_granted('ROLE_USER') and object.user == user",
+            securityMessage: "Vous n'avez pas accès à cette annonce"), 
+
+
+        new Delete(
+            security: "is_granted('ROLE_USER') and object.user == user",
+            securityMessage: "Vous n'avez pas accès à cette annonce"
+        )
     ]
 )]
 class Annonce
@@ -31,10 +42,6 @@ class Annonce
     #[ORM\Column]
     #[Groups(['annonce:read'])]
     private ?int $id = null;
-
-    #[ORM\Column(type: Types::BIGINT)]
-    #[Groups(['annonce:read', 'annonce:write', 'annonce:update'])]
-    private ?string $type = null;
 
     #[ORM\Column]
     #[Groups(['annonce:read', 'annonce:write', 'annonce:update'])]
@@ -57,6 +64,7 @@ class Annonce
      * @var Collection<int, Image>
      */
     #[ORM\ManyToMany(targetEntity: Image::class)]
+    #[Groups(['annonce:read', 'annonce:write'])]
     private Collection $images;
 
     /**
