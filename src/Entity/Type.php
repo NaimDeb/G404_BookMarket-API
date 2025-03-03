@@ -11,12 +11,12 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: TypeRepository::class)]
-#[ApiResource(
-    operations: [
-        new GetCollection(),
-        new Get()
-    ]
-)]
+// #[ApiResource(
+//     operations: [
+//         new GetCollection(),
+//         new Get()
+//     ]
+// )]
 class Type
 {
     #[ORM\Id]

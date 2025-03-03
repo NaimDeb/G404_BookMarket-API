@@ -8,6 +8,7 @@ use Doctrine\ORM\Mapping as ORM;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
+use App\DataPersister\ProfessionalDetailsDataPersister;
 use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: ProfessionalDetailsRepository::class)]
@@ -17,6 +18,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
             denormalizationContext: ['groups' => ['proDetails:write']],
             validationContext: ['groups' => ['Default']],
             security: "is_granted('ROLE_ADMIN')",
+            processor: ProfessionalDetailsDataPersister::class
         ),
         new Get(
             denormalizationContext: ['groups' => ['proDetails:read']],
@@ -26,7 +28,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
         new Patch(
             denormalizationContext: ['groups' => ['proDetails:write']],
             validationContext: ['groups' => ['Default']],
-            security: "is_granted('ROLE_USER')",
+            security: "is_granted('ROLE_PROFESSIONAL')",
         ),
     ]
 )]
