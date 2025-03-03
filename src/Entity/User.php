@@ -70,11 +70,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $profileDesc = null;
 
 
-    #[ORM\OneToOne(mappedBy: 'user', cascade: ['persist', 'remove'])]
+    #[ORM\OneToOne(mappedBy: 'user', cascade: ['persist', 'remove'], orphanRemoval: true)]
     #[Groups(['user:write','user:read', 'userDetails:write', 'userDetails:read'])]
     private ?UserDetails $userDetails = null;
 
-    #[ORM\OneToOne(mappedBy: 'user', cascade: ['persist', 'remove'])]
+    #[ORM\OneToOne(mappedBy: 'user', cascade: ['persist', 'remove'], orphanRemoval: true)]
     #[Groups(['user:write','user:read', 'professionalDetails:write', 'professionalDetails:read'])]
     private ?ProfessionalDetails $professionalDetails = null;
 

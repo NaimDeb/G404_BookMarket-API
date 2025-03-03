@@ -12,8 +12,8 @@ security:
     firewalls:
         login:
             pattern: ^/api/login
-            
             stateless: true
+            
             json_login:
                 check_path: /api/login_check
                 username_path: email
