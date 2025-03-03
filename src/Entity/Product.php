@@ -20,7 +20,8 @@ use Symfony\Component\Serializer\Attribute\Groups;
         new Get(normalizationContext: ['groups' => ['product:read']]),
         new Post(security: 'is_granted("ROLE_USER")', denormalizationContext: ['groups' => ['product:write']],),
         new Patch(security: 'is_granted("ROLE_USER")', denormalizationContext: ['groups' => ['product:write']]),
-        new Delete()
+        
+        new Delete(security: 'is_granted("ROLE_ADMIN")', securityMessage: 'Only administrators can delete products'),
     ]
 )]
 class Product
