@@ -27,10 +27,15 @@ class AnnonceDataPersister implements ProcessorInterface
                 throw new \Symfony\Component\Security\Core\Exception\AccessDeniedException('Not authenticated');
             }
 
-            $data->setUser($user);
+            if ($data->getUser() && $data->getCreatedAt()) {
+                $data->setUpdatedAt(new \DateTimeImmutable());
+            } else {
+                $data->setUser($user);
+                $data->setCreatedAt(new \DateTimeImmutable());
+            }
 
-        
-        
+
+
 
 
             $this->entityManager->persist($data);
@@ -39,5 +44,4 @@ class AnnonceDataPersister implements ProcessorInterface
 
         return $data;
     }
-
 }

@@ -26,7 +26,8 @@ use Symfony\Component\Serializer\Attribute\Groups;
         new Patch(
             denormalizationContext: ['groups' => ['annonce:update']],
             security: "is_granted('ROLE_USER') and object.user == user",
-            securityMessage: "Vous n'avez pas accès à cette annonce"), 
+            securityMessage: "Vous n'avez pas accès à cette annonce", 
+            processor: AnnonceDataPersister::class),
 
 
         new Delete(
@@ -72,6 +73,14 @@ class Annonce
      */
     #[ORM\OneToMany(targetEntity: UserTransactions::class, mappedBy: 'annonce')]
     private Collection $userTransactions;
+
+
+    #[Groups(['annonce:read'])]
+    #[ORM\Column]
+    private ?\DateTimeImmutable $createdAt = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $updatedAt = null;
 
     public function __construct()
     {
@@ -184,6 +193,30 @@ class Annonce
                 $userTransaction->setAnnonce(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getCreatedAt(): ?\DateTimeImmutable
+    {
+        return $this->createdAt;
+    }
+
+    public function setCreatedAt(\DateTimeImmutable $createdAt): static
+    {
+        $this->createdAt = $createdAt;
+
+        return $this;
+    }
+
+    public function getUpdatedAt(): ?\DateTimeImmutable
+    {
+        return $this->updatedAt;
+    }
+
+    public function setUpdatedAt(?\DateTimeImmutable $updatedAt): static
+    {
+        $this->updatedAt = $updatedAt;
 
         return $this;
     }
