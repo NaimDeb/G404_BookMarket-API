@@ -68,6 +68,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      * @var list<string> The user roles
      */
     #[ORM\Column]
+    #[Groups(['user:read'])]
     private array $roles = [];
 
     /**
@@ -95,6 +96,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?ProfessionalDetails $professionalDetails = null;
 
     #[ORM\OneToOne(inversedBy: 'user', cascade: ['persist', 'remove'])]
+    #[Groups(['user:write', 'user:read'])]
     private ?Image $image = null;
 
     /**

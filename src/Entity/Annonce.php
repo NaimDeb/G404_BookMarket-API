@@ -10,6 +10,7 @@ use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Delete;
 use App\DataPersister\AnnonceDataPersister;
 use App\Repository\AnnonceRepository;
+use App\State\Provider\LastFiveProvider;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
@@ -19,15 +20,27 @@ use Symfony\Component\Serializer\Attribute\Groups;
 #[ApiResource(
     operations: [
         new Get(normalizationContext: ['groups' => ['annonce:read']]),
-        new Post(denormalizationContext: ['groups' => ['annonce:write']],
-            processor: AnnonceDataPersister::class),
+        new Post(
+            denormalizationContext: ['groups' => ['annonce:write']],
+            processor: AnnonceDataPersister::class
+        ),
 
-        
+
+        new GetCollection(
+            uriTemplate: '/annonces/last-five',
+            normalizationContext: ['groups' => ['annonce:read']],
+            provider: LastFiveProvider::class,
+            name: 'getLastFive'
+        ),
+
+
+
         new Patch(
             denormalizationContext: ['groups' => ['annonce:update']],
             security: "is_granted('ROLE_USER') and object.user == user",
-            securityMessage: "Vous n'avez pas accès à cette annonce", 
-            processor: AnnonceDataPersister::class),
+            securityMessage: "Vous n'avez pas accès à cette annonce",
+            processor: AnnonceDataPersister::class
+        ),
 
 
         new Delete(
@@ -90,7 +103,7 @@ class Annonce
 
 
     public function getId(): ?int
-    
+
     {
         return $this->id;
     }
