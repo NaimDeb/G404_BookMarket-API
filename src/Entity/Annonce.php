@@ -10,7 +10,8 @@ use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Delete;
 use App\DataPersister\AnnonceDataPersister;
 use App\Repository\AnnonceRepository;
-use App\State\Provider\LastFiveProvider;
+use App\State\Provider\RecentAnnonceProvider;
+use App\State\Provider\SameSellerAnnonceProvider;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
@@ -25,13 +26,21 @@ use Symfony\Component\Serializer\Attribute\Groups;
             processor: AnnonceDataPersister::class
         ),
 
+        new GetCollection(
+            uriTemplate: '/annonce/{id}/sameSeller',
+            normalizationContext: ['groups' => ['annonce:read']],
+            provider: SameSellerAnnonceProvider::class,
+
+
+        ),
 
         new GetCollection(
-            uriTemplate: '/annonces/last-five',
+            uriTemplate: '/annonce/recent',
             normalizationContext: ['groups' => ['annonce:read']],
-            provider: LastFiveProvider::class,
-            name: 'getLastFive'
+            provider: RecentAnnonceProvider::class,
         ),
+
+
 
 
 
