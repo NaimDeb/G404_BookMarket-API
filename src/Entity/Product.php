@@ -33,11 +33,11 @@ class Product
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['product:read', 'product:write'])]
+    #[Groups(['product:read', 'product:write', 'annonce:read'])]
     private ?string $name = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['product:read', 'product:write'])]
+    #[Groups(['product:read', 'product:write', 'annonce:read'])]
     private ?string $specifications = null;
 
     /**
@@ -54,6 +54,7 @@ class Product
     private ?Type $type = null;
 
     #[ORM\ManyToOne(inversedBy: 'products')]
+    #[Groups(['annonce:read'])]
     private ?Author $author = null;
 
     public function __construct()
